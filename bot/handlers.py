@@ -7,7 +7,10 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
+from aiogram.enums import ChatAction
+
 from bot.llm_client import LLMClient, LLMClientError
+from bot.prompts import build_user_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +53,8 @@ def get_router(llm_client: LLMClient) -> Router:
             await message.answer("Пожалуйста, отправьте текстовый запрос.")
             return
 
-        prompt = (
-            "Сформируй ответ для проректора по молодежной политике. "
-            "Дай 3–7 четких тезисов или коротких абзацев, используй официальный, но живой стиль. "
-            "При необходимости предложи несколько формулировок и подчеркни, что окончательное решение за проректором.\n\n"
-            f"Запрос: {user_text}"
-        )
+        await message.bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
+        prompt = build_user_prompt(user_text)
 
         try:
             answer = await llm_client.generate_answer(prompt)
